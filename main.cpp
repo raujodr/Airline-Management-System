@@ -23,7 +23,7 @@ vector<int> flightnumberforairport(multimap<string, int> m, string s){
 }
 
 int main(){
-    ifstream file("HW4Data.txt");
+    ifstream file("data.txt");
     
     map<int, string> flightnumber_to_data;
     multimap<string, int> departure_to_flightnumber;
