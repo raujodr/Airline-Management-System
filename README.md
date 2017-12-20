@@ -1,8 +1,3 @@
-#include <iostream>
-#include <queue>
-
-using namespace std;
-
 class Stack{
     queue<int> q1, q2;
     int curr_size;
