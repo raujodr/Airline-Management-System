@@ -1,61 +1,56 @@
-class Stack{
-    queue<int> q1, q2;
-    int curr_size;
-    public:
-    Stack(){
-        curr_size = 0;
-    }
-    
-    void push(int x){
-        //Enqueue x to q2;
-        q2.push(x);
-        curr_size++;
-        
-        //One by one dequeue from q1 and enqueue to q2;
-        while (!q1.empty()){
-            q2.push(q1.front());
-            q1.pop();
-        }
-        
-        //Swap q1 and q2;
-        queue<int> q = q1;
-        q1 = q2;
-        q2 = q;
-    }
-    
-    void pop(){
-        if (q1.empty())
-            return;
-        q1.pop();
-        curr_size--;
-    }
-    
-    
-    int top(){
-        if (q1.empty())
-            return -1;
-        return q1.front();
-    }
-    
-    int size(){
-        return curr_size;
-    }
+#include <iostream>
+#include <vector>
+#include <map>
+#include <fstream>
+
+using namespace std;
+
+class Flight{
+public:
+    int flightnumber;
+    string departure;
+    string destination;
+    int flighttime;
 };
 
-int main() {
-    Stack s;
-    s.push(1);
-    s.push(2);
-    s.push(3);
-    s.push(4);
+vector<int> flightnumberforairport(multimap<string, int> m, string s){
+    vector<int> res;
+    multimap<string, int>::iterator begin = m.lower_bound(s);
+    multimap<string, int>::iterator end = m.upper_bound(s);
+    while (begin != end)
+        res.push_back((*begin++).second);
+    return res;
+}
+
+int main(){
+    ifstream file("HW4Data.txt");
     
-    cout << "current size: " << s.size() << "\n";
-    cout << s.top() << "\n";
-    s.pop();
-    cout << s.top() << "\n";
-    s.pop();
-    cout << s.top() << "\n";
-    cout << "current size: " << s.size() << "\n";
+    map<int, string> flightnumber_to_data;
+    multimap<string, int> departure_to_flightnumber;
+    multimap<string, int> destination_to_flightnumber;
+    
+
+    while (!file.eof()) {
+        Flight data;
+        file >> data.flightnumber >> data.departure >> data.departure >> data.flighttime;
+        flightnumber_to_data[data.flightnumber] = data.departure + " " + data.destination + " " + to_string(data.flighttime);
+        departure_to_flightnumber.insert(pair<string, int>(data.departure, data.flightnumber));
+        destination_to_flightnumber.insert(make_pair(data.destination, data.flightnumber));
+    }
+    file.close();
+    
+    string s;
+    cout << "Please enter the departure airport: ";
+    cin >> s;
+    vector<int> res = flightnumberforairport(departure_to_flightnumber, s);
+    for (auto i: res)
+        cout << i << " ";
+    
+    cout << "Please enter the destination airport: ";
+    cin >> s;
+    res = flightnumberforairport(departure_to_flightnumber, s);
+    for (auto i: res)
+        cout << i << " ";
     
     return 0;
 }
