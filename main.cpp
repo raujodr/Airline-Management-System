@@ -3,8 +3,10 @@
 #include <map>
 #include <queue>
 #include <fstream>
+#include <chrono>
 
 using namespace std;
+using namespace std::chrono;
 
 class Flight{
 public:
@@ -14,12 +16,18 @@ public:
     int flighttime;
 };
 
-vector<int> flightnumberforairport(multimap<string, int> m, string s){
+vector<int> flightnumberforairport(multimap<string, int> m, string s1){
     vector<int> res;
-    multimap<string, int>::iterator begin = m.lower_bound(s);
-    multimap<string, int>::iterator end = m.upper_bound(s);
-    while (begin != end)
-        res.push_back((*begin++).second);
+    string s2 = s1;
+    for (int i = 0; i < s1.size(); i++)
+        s2[i] = toupper(s1[i]);
+    cout << "s2 size: " << s2.size() << "\n";
+    multimap<string, int>::iterator begin = m.lower_bound(s2);
+    multimap<string, int>::iterator end = m.upper_bound(s2);
+    while (begin != end){
+        res.push_back(begin->second);
+        begin++;
+    }
     return res;
 }
 
@@ -27,16 +35,6 @@ void swapped(Flight *a, Flight *b){
     Flight temp = *a;
     *a = *b;
     *b = temp;
-}
-
-void selectionsort(vector<Flight> v, int size){
-    for (int i = 0; i < size - 1; i++){
-        int min_index = i;
-        for (int j = i + 1; j < size; j++)
-            if (v[j].flighttime < v[i].flighttime)
-                min_index = j;
-        swapped(&v[i], &v[min_index]);
-    }
 }
 
 void merged(vector<Flight> v, int low, int med, int high){
@@ -56,10 +54,9 @@ void merged(vector<Flight> v, int low, int med, int high){
         v[k++] = v3[j++];
 }
 
-void mergesort(vector<Flight> v, int low, int high){
+void mergesort(vector<Flight> &v, int low, int high){
     if (low < high){
         int med = low + (high - low) / 2;
-
         mergesort(v, low, med);
         mergesort(v, med + 1, high);
         merged(v, low, med, high);
@@ -76,7 +73,7 @@ int partitioned(vector<Flight> v, int low, int high){
     return i;
 }
 
-void quicksort(vector<Flight> v, int low, int high){
+void quicksort(vector<Flight> &v, int low, int high){
     if (low < high){
         int pi = partitioned(v, low, high);
         quicksort(v, low, pi - 1);
@@ -84,7 +81,17 @@ void quicksort(vector<Flight> v, int low, int high){
     }
 }
 
-void insertsort(vector<Flight> v, int size){
+void selectionsort(vector<Flight> &v, int size){
+    for (int i = 0; i < size - 1; i++){
+        int min_index = i;
+        for (int j = i + 1; j < size; j++)
+            if (v[j].flighttime < v[i].flighttime)
+                min_index = j;
+        swapped(&v[i], &v[min_index]);
+    }
+}
+
+void insertsort(vector<Flight> &v, int size){
     for (int i = 1; i < size; i++) {
         auto temp = v[i].flighttime;
         int j = i - 1;
@@ -97,35 +104,40 @@ void insertsort(vector<Flight> v, int size){
     }
 }
 
-void bubblesort(vector<Flight> v, int size){
+void bubblesort(vector<Flight> &v, int size){
     for (int i = 0; i < size - 1; i++)
         for (int j = 0; j < size - i - 1; j++)
             if (v[j].flighttime > v[j + 1].flighttime)
                 swapped(&v[j], &v[j + 1]);
 }
 
+void print(vector<Flight> v){
+    for (auto i: v)
+        cout << "No. " << i.flightnumber << " from " << i.departure << " to " << i.destination << " takes " << i.flighttime << " minutes.\n";
+}
+
 int main(){
-    ifstream file("HW4Data.txt");
+    ifstream file("Data.txt");
     
     map<int, string> flightnumber_to_data;
     multimap<string, int> departure_to_flightnumber;
     multimap<string, int> destination_to_flightnumber;
     vector<Flight> v;
+    Flight data;
     
     while (!file.eof()) {
-        Flight data;
-        file >> data.flightnumber >> data.departure >> data.departure >> data.flighttime;
+        file >> data.flightnumber >> data.departure >> data.destination >> data.flighttime;
+        v.push_back(data);
         flightnumber_to_data[data.flightnumber] = data.departure + " " + data.destination + " " + to_string(data.flighttime);
         departure_to_flightnumber.insert(pair<string, int>(data.departure, data.flightnumber));
         destination_to_flightnumber.insert(make_pair(data.destination, data.flightnumber));
-        v.push_back(data);
     }
     file.close();
     int size = (int)v.size();
     
-    while (1) {
-        cout << "Please choose the option from the menu.\n" << "(A) Find associated flight number with the departure airport\n" << "(B) Find associated flight number with the destination airport\n" << "(C) Exit\n";
-        char option;
+    char option = '0';
+    while (tolower(option) != 'd') {
+        cout << "Please choose the option from the menu.\n" << "(A) Find associated flight number with the departure airport\n" << "(B) Find associated flight number with the destination airport\n" << "(C) Sort according to flight time\n" << "(D) Exit\n";
         cin >> option;
         switch (option) {
             case 'a':
@@ -156,29 +168,83 @@ int main(){
             case 'c':
             case 'C':
             {
-                vector<Flight> v2 = v;
-                selectionsort(v2, size);
-                
-                v2 = v;
-                mergesort(v2, 0, size - 1);
-                
-                v2 = v;
-                quicksort(v2, 0, size - 1);
-                
-                v2 = v;
-                insertsort(v2, size);
-                
-                v2 = v;
-                bubblesort(v2, size);
+                char option2 = '0';
+                while (option2 != '6'){
+                    cout << "Please choose the sorting option.\n" << "(1) Mergesort\n" << "(2) Quicksort\n" << "(3) Selectionsort\n" << "(4) Insertionsort\n" << "(5) Bubblesort\n" << "(6) Back to previous menu\n";
+                    cin >> option2;
+                    switch (option2) {
+                        case '1':
+                        {
+                            auto start = high_resolution_clock::now();
+                            mergesort(v, 0, size - 1);
+                            auto end = high_resolution_clock::now();
+                            duration<double> elapsed = end - start;
+                            print(v);
+                            cout << "Elapsed time: " << elapsed.count() << "s.\n";
+                        }
+                            break;
+                        
+                        case '2':
+                        {
+                            auto start = high_resolution_clock::now();
+                            quicksort(v, 0, size - 1);
+                            auto end = high_resolution_clock::now();
+                            duration<double> elapsed = end - start;
+                            print(v);
+                            cout << "Elapsed time: " << elapsed.count() << "s.\n";
+                        }
+                            break;
+                        
+                        case '3':
+                        {
+                            auto start = chrono::high_resolution_clock::now();
+                            selectionsort(v, size);
+                            auto end = chrono::high_resolution_clock::now();
+                            duration<double> elapsed = end - start;
+                            print(v);
+                            cout << "Elapsed time: " << elapsed.count() << "s.\n";
+                        }
+                            break;
+                        
+                        case '4':
+                        {
+                            auto start = chrono::high_resolution_clock::now();
+                            insertsort(v, size);
+                            auto end = chrono::high_resolution_clock::now();
+                            duration<double> elapsed = end - start;
+                            print(v);
+                            cout << "Elapsed time: " << elapsed.count() << "s.\n";
+                        }
+                            break;
+                        
+                        case '5':
+                        {
+                            auto start = chrono::high_resolution_clock::now();
+                            bubblesort(v, size);
+                            auto end = chrono::high_resolution_clock::now();
+                            duration<double> elapsed = end - start;
+                            print(v);
+                            cout << "Elapsed time: " << elapsed.count() << "s.\n";
+                        }
+                            break;
+                     
+                        case '6':
+                            break;
+                        
+                        default:
+                            cout << "Please re-enter the correct option.\n";
+                    }
+                }
             }
                 break;
             
             case 'd':
             case 'D':
-                return 0;
+                break;
                 
             default:
                 cout << "Please re-enter the correct option.\n";
         }
     }
+    return 0;
 }
